@@ -1,0 +1,58 @@
+!* SEM UMD Workshop 2021
+2a. Path Analysis Foundations
+4-Jan-2021
+Instructor: Dr. Gregory Hancock
+Notes: Linh Nguyen
+*! All models are aggregated for notekeeping, need to be separated to run
+
+TITLE:
+    Example 1: Read Math Goals
+DATA: 
+    !no need for path if in same folder as script file
+    !datafile has no header
+    File is MPLUS_MLR_Exercise_rawdata.csv;
+VARIABLE:
+    !need to be in same order as datafile
+    NAMES ARE ReadSC1 MathSC1 Goals2;
+MODEL:
+    !path model. default estimation method is ML
+    Goals2 ON ReadSC1 MathSC1;
+    !these 3 are included by default
+    !1. variances for exogenous
+    ReadSC1; MathSC1;
+    !2. error for endogenous
+    Goals2;
+    !3. covariances between exogenous
+    ReadSC1 WITH MathSC1;
+OUTPUT:
+    !SAMPSTAT: sample means, variances, covariances and correlations
+    !STDYX: standardized solutions. there are more options
+    SAMPSTAT STDYX;
+     
+!********!
+TITLE:
+    Example 2: 2 DVs Read Math Goals
+DATA:
+    FILE IS mvpa_example_data.csv;
+VARIABLE:
+    NAMES ARE ReadSC1 MathSC1 Goals2 SATmath;
+MODEL:
+    Goals2 ON ReadSC1 MathSC1;
+    SATmath ON Goals2 ReadSC1 MathSC1;
+OUTPUT:
+    SAMPSTAT STDYX;
+
+
+!********!
+TITLE:
+    Example 3: Standardized Exercise Hardy Fitness Stress Illness;
+DATA:
+    FILE IS MPLUS_Path_Analysis_Exercise_data.txt;
+    !standardized correlation matrix
+    TYPE IS STD CORR;
+    !number of observations
+    NOBS IS 373;
+VARIABLE:
+    NAMES ARE Exercise Hardy Fitness Stress Illness;
+
+
