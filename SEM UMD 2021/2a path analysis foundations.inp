@@ -54,5 +54,23 @@ DATA:
     NOBS IS 373;
 VARIABLE:
     NAMES ARE Exercise Hardy Fitness Stress Illness;
-
+TITLE:
+    Illness Model--Fit Assessment Exercise
+DATA:
+    FILE IS MPLUS_Path_Analysis_Exercise_data.txt;
+    TYPE IS STD CORR;
+    NOBS IS 373;
+VARIABLE:
+    NAMES ARE Exercise Hardy Fitness Stress Illness;
+MODEL: 
+    !final endogenous variable
+    Illness ON Fitness Stress;
+    !two intermediate variables
+    Fitness ON Exercise;
+    Stress ON Hardy;
+    !show correlations between 2 exogenous variables in diagram and output
+    !doesn't affect other estimates
+    Exercise WITH Hardy;
+OUTPUT: 
+    SAMPSTAT STDYX;
 
