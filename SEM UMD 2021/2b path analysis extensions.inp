@@ -1,0 +1,213 @@
+!* SEM UMD Workshop 2021
+2b. Path Analysis Extensions
+5-Jan-2021
+Instructor: Dr. Gregory Hancock
+Notes: Linh Nguyen
+*! All models are aggregated for notekeeping, need to be separated to run
+
+TITLE: 
+    Example 1: Mediation example
+DATA:
+    FILE IS mvpa_mediation_data.csv;
+VARIABLE:
+    NAMES ARE V1 V2 V3 V4;
+ANALYSIS:
+    !number of bootstrap samples
+    BOOTSTRAP = 5000;
+MODEL:
+    V3 ON V1;
+    V2 ON V1;
+    V4 ON V1 V2 V3;
+    !endogenous variable don't covary directly, but their errors
+    !aka above and beyond the other relationships
+    V2 WITH V3;
+MODEL INDIRECT:  
+    V4 IND V1;
+    !V2 is mediator, V1 is IV
+    V4 IND V2 V1;
+    !V3 is mediator, V1 is IV
+    V4 IND V3 V1;
+OUTPUT:
+    !CINTERVAL: bootstrapped CI. BC = bias-corrected
+    SAMPSTAT STDYX CINTERVAL(BCBOOTSTRAP);
+
+!*******!
+TITLE:
+    Example 2: Mediation exercise
+DATA:
+    FILE IS Mediation_Exercise_data.csv;
+VARIABLE:
+    NAMES ARE climate control burnout attitude educout psychout;
+ANALYSIS: 
+    BOOTSTRAP = 5000;
+MODEL: 
+    educout ON attitude;
+    psychout ON attitude;
+    attitude ON burnout climate control;
+    burnout ON climate control;
+    climate WITH control;
+    educout WITH psychout;
+MODEL INDIRECT:
+    educout IND attitude climate;
+    educout IND attitude burnout climate;
+    psychout IND attitude climate;
+    psychout IND attitude burnout climate;
+    educout IND attitude control;
+    educout IND attitude burnout control;
+    psychout IND attitude control;
+    psychout IND attitude burnout control;
+    attitude IND burnout climate;
+    attitude IND burnout control;
+    !alternatively, can run these commands for total indirect effects:
+    !attitude IND climate; 
+    !attitude IND control; 
+    !educout IND climate;
+    !educout IND control;
+    !educout IND burnout;
+    !psychout IND climate;
+    !psychout IND control;
+    !psychout IND burnout;
+OUTPUT: 
+    SAMPSTAT STDYX CINTERVAL (BCBOOTSTRAP)
+
+!*******!
+TITLE:
+    Example 3: APIM base model
+DATA:
+    FILE IS APIM.csv;
+VARIABLE:
+    NAMES ARE msex mlife fsex flife;
+    !missing values are codded as -999
+    !default FIML method assuming MAR
+    MISSING ALL (-999);
+MODEL:
+    mlife ON msex fsex;
+    flife ON fsex msex;
+    msex WITH fsex; 
+    mlife WITH flife;
+OUTPUT: 
+    SAMPSTAT STDYX;
+
+!*******!
+TITLE:
+    Example 4: APIM actor-only model
+    !no cross lag between partners
+    !alternatively: partner-only -> only cross lag
+DATA:
+    FILE IS APIM.csv;
+VARIABLE:
+    NAMES ARE msex mlife fsex flife;
+    MISSING ALL (-999);
+MODEL:
+    mlife ON msex;
+    flife ON fsex;
+    msex WITH fsex; 
+    mlife WITH flife;
+OUTPUT: 
+    SAMPSTAT STDYX;
+
+!*******!
+TITLE:
+    Example 5: APIM couple model
+    !couples have same effects
+DATA:
+    FILE IS APIM.csv;
+VARIABLE:
+    NAMES ARE msex mlife fsex flife;
+    MISSING ALL (-999);
+MODEL:
+    !constrain path between msex-mlife and fsex-mlife to be equal = c
+    mlife ON msex (c)
+             fsex (c);
+    !constrain path between msex-flife and fsex-flife to be equal = d
+    flife ON fsex (d)
+             msex (d);
+    msex WITH fsex; 
+    mlife WITH flife;
+OUTPUT: 
+    SAMPSTAT STDYX;
+
+!*******!
+TITLE:
+    Example 6: APIM contrast model
+    !couples have opposite effects
+DATA:
+    FILE IS APIM.csv;
+VARIABLE:
+    NAMES ARE msex mlife fsex flife;
+    MISSING ALL (-999);
+MODEL:
+    !label paths to be accessed later
+    mlife ON msex (cm)
+             fsex (cf);
+    flife ON fsex (df)
+             msex (dm);
+    msex WITH fsex; 
+    mlife WITH flife;
+MODEL CONSTRAINTS:
+    !force paths to be opposite
+    cm = -1*cf;
+    df = -1*dm;
+OUTPUT: 
+    SAMPSTAT STDYX;
+
+!*******!
+TITLE:
+    Example 7: APIM asymptotic parameter
+    !compare specific parameters 
+DATA:
+    FILE IS APIM.csv;
+VARIABLE:
+    NAMES ARE msex mlife fsex flife;
+    MISSING ALL (-999);
+MODEL:
+    mlife ON msex (a1)
+             fsex (p21);
+    flife ON fsex (a2)
+             msex (p12);
+    msex WITH fsex; 
+    mlife WITH flife;
+MODEL CONSTRAINTS:
+    !not really *constraining* anything
+    !just create new variables
+    NEW(a1a2 p12p21 
+        a1p21 a2p12
+        a1p12 a2p21);
+    !differences between parameters
+    a1a2 = a1 - a2;
+    p12p21 = p12 - p21;
+    a1p21 = a1 - p21;
+    a2p12 = a2 - p12;
+    a1p12 = a1 - p12;
+    a2p21 = a2 - p21;
+OUTPUT: 
+    SAMPSTAT STDYX;
+
+!*******!
+TITLE:
+    Example 8: APIM exercise
+    !base model + asymptotic parameter comparison
+DATA:
+    FILE IS APIM_exercise_data.txt;
+VARIABLE:
+    NAMES ARE momperc1 momperc2 kidach1 kidach2;
+    MISSING ALL (-999);
+MODEL:
+    momperc2 ON momperc1 (a1)
+                kidach1 (p21);
+    kidach2 ON momperc1 (p12)
+               kidach1 (a2);
+    momperc1 WITH kidach1;
+    momperc2 WITH kidach2;
+MODEL CONSTRAINTS:
+    NEW (a1a2 p12p21
+         a1p21 a2p12
+         a1p12 a2p21);
+    a1a2 = a1 - a2;
+    p12p21 = p12 - p21;
+    a1p21 = a1 - p21;
+    a2p12 = a2 - p12;
+    a1p12 = a1 - p12;
+    a2p21 = a2 - p21;
+OUTPUT:
+    SAMPSTAT STDYX;
