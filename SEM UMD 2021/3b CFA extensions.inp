@@ -1,0 +1,171 @@
+!* SEM UMD Workshop 2021
+3b. Confirmatory Factor Analysis Extensions
+5-Jan-2021
+Instructor: Dr. Gregory Hancock
+Notes: Linh Nguyen
+*! All models are aggregated for notekeeping, need to be separated to run
+
+TITLE:
+    Example 1: Second-order general self-concept model
+DATA:
+    FILE IS proficiencyraw-female.csv;
+VARIABLE:
+    NAMES ARE goals1-goals6 rsc1-rsc5 hsc1-hsc5 
+              msc1-msc5 ssc1-ssc5 SATvoc SATcomp 
+              SATlang SATmath SATprob SATproc;
+    USEVARIABLES = rsc1-rsc3 hsc1-hsc3 msc1-msc3 
+                   ssc1-ssc3;
+MODEL:
+    !first order factors
+    READSC BY rsc1-rsc3;
+    HISTSC BY hsc1-hsc3;
+    MATHSC BY msc1-msc3;
+    SCISC BY ssc1-ssc3;
+
+    !second order factors
+    !asterisk after first indicator remove the default fix variance = 1
+    GENERAL BY READSC* HISTSC MATHSC SCISC;
+    !standardize by fixing general variance to 1
+    GENERAL@1;
+
+    !cross-items error covariances
+    rsc1-rsc3 PWITH hsc1-hsc3;
+    rsc1-rsc3 PWITH msc1-msc3;
+    rsc1-rsc3 PWITH ssc1-ssc3;
+    hsc1-hsc3 PWITH msc1-msc3;
+    hsc1-hsc3 PWITH ssc1-ssc3;
+    msc1-msc3 PWITH ssc1-ssc3;
+OUTPUT:
+    SAMPSTAT STDYX;
+
+!*******!
+TITLE:
+    Example 2: Residualized/bifactor self-concept model
+DATA:
+    FILE IS proficiencyraw-female.csv;
+VARIABLE:
+    NAMES ARE goals1-goals6 rsc1-rsc5 hsc1-hsc5 
+              msc1-msc5 ssc1-ssc5 SATvoc SATcomp 
+              SATlang SATmath SATprob SATproc;
+    USEVARIABLES = rsc1-rsc3 hsc1-hsc3 msc1-msc3 
+                   ssc1-ssc3;
+MODEL:
+    !residualized factors
+    READSC_R BY rsc1-rsc3;
+    HISTSC_R BY hsc1-hsc3;
+    MATHSC_R BY msc1-msc3;
+    SCISC_R BY ssc1-ssc3;
+
+    !global factor standardized variance = 1 
+    GENERAL BY rsc1* rsc2-rsc3 hsc1-hsc3 msc1-msc3 ssc1-ssc3;
+    GENERAL@1;
+
+    !constrain no relation between global and residualized factors
+    GENERAL WITH READSC_R@0;
+    GENERAL WITH HISTSC_R@0;
+    GENERAL WITH MATHSC_R@0;
+    GENERAL WITH SCISC_R@0;
+
+    !constrain no relation between certain residualized factors
+    !only allow reading and history / math and science
+    READSC_R WITH MATHSC_R@0;
+    READSC_R WITH SCISC_R@0;
+    HISTSC_R WITH MATHSC_R@0;
+    HISTSC_R WITH SCISC_R@0;
+
+    !cross-items error covariances
+    rsc1-rsc3 PWITH hsc1-hsc3;
+    rsc1-rsc3 PWITH msc1-msc3;
+    rsc1-rsc3 PWITH ssc1-ssc3;
+    hsc1-hsc3 PWITH msc1-msc3;
+    hsc1-hsc3 PWITH ssc1-ssc3;
+    msc1-msc3 PWITH ssc1-ssc3;
+
+OUTPUT:
+    SAMPSTAT STDYX;
+
+!*******!
+TITLE:
+    Example 3: MTMM - correlated traits, correlated methods
+DATA:
+    FILE IS MTMM_data.txt;
+    !data format is correlation matrix
+    TYPE IS STD CORR;
+    NOBS IS 158;
+VARIABLE:
+    NAMES ARE SCself ACself ECself MCself 
+              SCteach ACteach ECteach MCteach 
+              SCpar ACpar ECpar MCpar 
+              SCpeer ACpeer ECpeer MCpeer;
+MODEL:
+    !trait factors
+    SC BY SCself* SCteach SCpar SCpeer;
+    AC BY ACself* ACteach ACpar ACpeer;
+    EC BY ECself* ECteach ECpar ECpeer;
+    MC BY MCself* MCteach MCpar MCpeer;
+    
+    !method factors for different informants
+    self BY SCself* ACself ECself MCself;
+    teach BY SCteach* ACteach ECteach MCteach;
+    par BY SCpar* ACpar ECpar MCpar;
+    peer BY SCpeer* ACpeer ECpeer MCpeer;
+ 
+    !standardize all factors by fixing variance = 1
+    SC-peer@1;
+    
+    !constrain all correlation between traits and methods = 0
+    SC-MC WITH self@0;
+    SC-MC WITH teach@0; 
+    SC-MC WITH par@0;
+    SC-MC WITH peer@0;
+
+OUTPUT:
+    SAMPSTAT STDYX;
+
+!*******!
+TITLE:
+    Example 4: Parallel model
+DATA:
+    FILE IS Reliability_raw_data;
+VARIABLE:
+    NAMES ARE X1-X6;
+MODEL:
+    TASKGOAL@1;  
+    !force loadings to be the same = lambda
+    TASKGOAL BY X1-X6* (lambda);
+    !force error variance to be the same = theta
+    X1-X6 (theta);
+OUTPUT:
+    SAMPSTAT STDYX;
+
+!*******!
+TITLE:
+    Example 5: Tau-equivalent model
+DATA:
+    FILE IS Reliability_raw_data;
+VARIABLE:
+    NAMES ARE X1-X6;
+MODEL:
+    TASKGOAL@1;
+    !force loadings to be the same = lambda
+    TASKGOAL BY X1-X6* (lambda);
+    !no restriction on error variance
+    X1-X6;
+OUTPUT:
+    SAMPSTAT STDYX;
+
+!*******!
+TITLE:
+    Example 6: Congeneric model
+DATA:
+    FILE IS Reliability_raw_data;
+VARIABLE:
+    NAMES ARE X1-X6;
+MODEL:
+    TASKGOAL@1;
+    !no restriction on loadings/error variance
+    !default CFA
+    TASKGOAL BY X1-X6*;
+    X1-X6;
+OUTPUT:
+    SAMPSTAT STDYX;
