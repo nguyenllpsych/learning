@@ -1,0 +1,56 @@
+!* SEM UMD Workshop 2021
+3a. Confirmatory Factor Analysis Foundations
+5-Jan-2021
+Instructor: Dr. Gregory Hancock
+Notes: Linh Nguyen
+*! All models are aggregated for notekeeping, need to be separated to run
+
+TITLE:
+    Example 1: One-factor CFA 
+DATA:
+    FILE IS cfa1_data.csv;
+VARIABLE:
+    !can shortcut names if standard and contiguous
+    NAMES ARE V1-V5;
+MODEL:
+    !call factor anything, here F1
+    !first loading set to 1 by default
+    F1 BY V1-V5;
+    
+    !these lines included by default:
+    !error variances  
+    V1-V5;
+    !factor variance
+    F1;
+
+OUTPUT:
+    !MODINDICES: display all modification indices
+    SAMPSTAT STDYX MODINDICES(ALL);
+
+!*******!
+TITLE:
+    Example 2: Three-factor CFA Example
+DATA:
+    FILE IS cfa3_data.txt;
+    !data format is covariance matrix
+    TYPE IS COVA;
+    !number of observation
+    NOBS IS 580;
+VARIABLE:
+    NAMES ARE i4 i7 i9 i17 i5 i10 
+              i11 i15 i1 i2 i3 i6;
+MODEL:
+    !three factors
+    !ACCOMP can be i4-i17 because that's the order in VARIABLES
+    ACCOMP BY i4 i7 i9 i17;
+    DEPERSON BY i5 i10 i11 i15;
+    EXHAUST BY i1 i2 i3 i6;
+    
+    !these lines included by default:
+    !let three factors covary
+    !can only specify with 2 at a time
+    ACCOMP WITH DEPERSON EXHAUST;
+    DEPERSON WITH EXHAUST;
+
+OUTPUT:
+    SAMPSTAT STDYX MODINDICES(ALL);
