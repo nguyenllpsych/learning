@@ -169,3 +169,39 @@ MODEL:
     X1-X6;
 OUTPUT:
     SAMPSTAT STDYX;
+    
+!*******!
+TITLE:
+    Example 7: Coefficient H, with bootstrap
+DATA:
+    FILE IS Reliability_raw_data.csv;
+VARIABLE:
+    NAMES ARE X1-X6;
+ANALYSIS:
+    BOOTSTRAP IS 5000;
+MODEL:
+    !standardize factor
+    TGO@1;
+    TGO BY X1-X6* (L1-L6);
+    X1-X6 (TH1-TH6); 
+MODEL CONSTRAINT:
+    NEW(R1-R6 sumR H);
+    !all loadings positive
+    L1 > 0;
+    L2 > 0;
+    L3 > 0;
+    L4 > 0;
+    L5 > 0;
+    L6 > 0;
+    R1 = (L1^2)/TH1;
+    R2 = (L2^2)/TH2;
+    R3 = (L3^2)/TH3;
+    R4 = (L4^2)/TH4;
+    R5 = (L5^2)/TH5;
+    R6 = (L6^2)/TH6;
+    sumR = R1 + R2 + R3 + R4 + R5 + R6;
+    !formula for coefficient H
+    H = sumR/(1+sumR);
+OUTPUT:
+    SAMPSTAT STDYX CINT(bootstrap);
+  
