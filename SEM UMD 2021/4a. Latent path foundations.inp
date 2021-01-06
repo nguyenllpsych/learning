@@ -1,0 +1,259 @@
+!* SEM UMD Workshop 2021
+4a. Latent Variable Path Analysis Foundations
+6-Jan-2021
+Instructor: Dr. Gregory Hancock
+Notes: Linh Nguyen
+*! All models are aggregated for notekeeping, need to be separated to run
+
+TITLE:
+    Example 1: Latent math proficiency structural model
+DATA:
+    FILE IS proficiencyraw-female.csv;
+VARIABLE:
+    NAMES ARE goals1-goals6 rsc1-rsc5 hsc1-hsc5 
+              msc1-msc5 ssc1-ssc5 SATvoc SATcomp 
+              SATlang SATmath SATprob SATproc;
+    USEVARIABLES = goals1-goals6 rsc1-rsc5 hsc1-hsc5 
+                   msc1-msc5 ssc1-ssc5 SATmath 
+                   SATprob SATproc;
+ANALYSIS:
+    !number of bootstrapped samples for indirect effects
+    BOOTSTRAP = 5000;
+MODEL:
+    !specify factors
+    TASKGOAL BY goals1-goals6;
+    READSC BY rsc1-rsc5;
+    HISTSC BY hsc1-hsc5;
+    MATHSC BY msc1-msc5;
+    SCISC BY ssc1-ssc5;
+    MATHPROF BY SATmath SATprob SATproc;
+    
+    !structural equations among latent factors
+    TASKGOAL ON READSC HISTSC MATHSC SCISC;
+    MATHPROF ON TASKGOAL READSC MATHSC SCISC;
+    
+    !constrain some factor covariances = 0
+    HISTSC WITH MATHSC@0;
+    HISTSC WITH SCISC@0;
+    
+    !pairwise error covariances among parallel items
+    rsc1-rsc5 PWITH hsc1-hsc5;
+    rsc1-rsc5 PWITH msc1-msc5;
+    rsc1-rsc5 PWITH ssc1-ssc5;
+    hsc1-hsc5 PWITH msc1-msc5;
+    hsc1-hsc5 PWITH ssc1-ssc5;
+    msc1-msc5 PWITH ssc1-ssc5;
+
+MODEL INDIRECT:  
+    !taskgoal as mediator
+    MATHPROF IND TASKGOAL READSC;
+    MATHPROF IND TASKGOAL HISTSC;
+    MATHPROF IND TASKGOAL MATHSC;
+    MATHPROF IND TASKGOAL SCISC;
+
+OUTPUT:
+    SAMPSTAT STDYX CINTERVAL(BCBOOTSTRAP);
+
+!*******!
+TITLE:
+    Example 2: Job satisfaction model exercise
+DATA:
+    FILE IS Mplus_Latent_PA_Exercise_data.txt;
+    !data format is correlation matrix
+    TYPE IS STD CORR;
+    !122 observations
+    NOBS IS 122; 
+VARIABLE:
+    NAMES ARE Per1 JS1 JS2 Mot1 Mot2 SE1 SE2 VI1;
+MODEL:
+    !specify factors
+    ACHIEVE BY Mot1 Mot2;
+    ESTEEM BY SE1 SE2;
+    VERBAL BY VI1;
+    PERFORM BY Per1;
+    SATIS BY JS1 JS2;    
+
+    !some factors only have 1 indicator
+    !force 0 error variance on single indicator
+    !so the path btw single indicator and its factor = 1
+    !disattenuation: can use the indicator's reliability and fix error as the remaining
+    Per1@0;
+    VI1@0;
+
+    !structural equations
+    SATIS ON ACHIEVE PERFORM VERBAL;
+    PERFORM ON ESTEEM;
+
+MODEL INDIRECT:
+    !summary data -> cannot bootstrap
+    !estimates will have symmetric CI, assuming normality
+    SATIS IND PERFORM ESTEEM;
+OUTPUT:
+    !bias-corrected CI
+    SAMPSTAT STDYX;
+
+!*******!
+TITLE:
+    Example 3: Duncan & Stoolmiller exercise behavior model, Phase 1
+DATA:
+    FILE IS MPLUS_Ex_Beh_data.txt;
+    TYPE IS STD CORR;
+    NOBS IS 84;
+VARIABLE:
+    !two time points t1 and t2
+    NAMES ARE ss1t1 ss2t1 ss3t1 se1t1 se2t1 eb1t1 eb2t1 eb3t1
+              ss1t2 ss2t2 ss3t2 se1t2 se2t2 eb1t2 eb2t2 eb3t2;
+MODEL:
+    !a b c constrain measurement equivalence
+    !MI will test the relaxation of each of these constrains in BY statements
+    !measurement invariance -> can relax for final measurement model by removing a b c labels
+    SOCSUP1 BY ss1t1 
+               ss2t1 (a)
+               ss3t1 (b);
+    SELFEFF1 BY se1t1 
+                se2t1 (c);
+    EXBEH1 BY eb1t1
+              eb2t1 (d)
+              eb3t1 (e);
+    SOCSUP2 BY ss1t2 
+               ss2t2 (a)
+               ss3t2 (b);
+    SELFEFF2 BY se1t2 
+                se2t2 (c);
+    EXBEH2 BY eb1t2
+              eb2t2 (d)
+              eb3t2 (e);
+
+    !implied here is that all factors covary
+    !just no structural paths yet (this is just a measurement model)
+
+    !try without these specifications first
+    !then add these in (just to demonstrate the respecification process)
+    !these are same items at different time points
+    ss1t1 WITH ss1t2;
+    ss2t1 WITH ss2t2;
+    ss3t1 WITH ss3t2;
+    se1t1 WITH se1t2;
+    se2t1 WITH se2t2;
+    eb1t1 WITH eb1t2;
+    eb2t1 WITH eb2t2;
+    eb3t1 WITH eb3t2;
+
+OUTPUT:
+    !max modification indices = 3.841
+    !this is critical value for chi-sq for p = .05
+    SAMPSTAT STANDARDIZED MODINDICES(3.841);
+
+!*******!
+TITLE:
+    Example 4: Duncan & Stoolmiller exercise behavior model, Phase 2
+DATA:
+    FILE IS MPLUS_Ex_Beh_data.txt;
+    TYPE IS STD CORR;
+    NOBS IS 84;
+VARIABLE:
+    NAMES ARE ss1t1 ss2t1 ss3t1 se1t1 se2t1 eb1t1 eb2t1 eb3t1
+              ss1t2 ss2t2 ss3t2 se1t2 se2t2 eb1t2 eb2t2 eb3t2;
+MODEL:
+    SOCSUP1 BY ss1t1 
+               ss2t1 (a)
+               ss3t1 (b);
+    SELFEFF1 BY se1t1 
+                se2t1 (c);
+    EXBEH1 BY eb1t1
+              eb2t1 (d)
+              eb3t1 (e);
+    SOCSUP2 BY ss1t2 
+               ss2t2 (a)
+               ss3t2 (b);
+    SELFEFF2 BY se1t2 
+                se2t2 (c);
+    EXBEH2 BY eb1t2
+              eb2t2 (d)
+              eb3t2 (e);
+
+    !structural equations among factors
+    !will def fit worse than final meas model because nested
+    EXBEH2 ON EXBEH1 SELFEFF1 SELFEFF2;
+    SELFEFF2 ON SELFEFF1 SOCSUP1 SOCSUP2;
+    SOCSUP2 ON SOCSUP1;
+
+    !error covariance between same items across time points
+    ss1t1 WITH ss1t2;
+    ss2t1 WITH ss2t2;
+    ss3t1 WITH ss3t2;
+    se1t1 WITH se1t2;
+    se2t1 WITH se2t2;
+    eb1t1 WITH eb1t2;
+    eb2t1 WITH eb2t2;
+    eb3t1 WITH eb3t2;
+
+OUTPUT:
+    SAMPSTAT STANDARDIZED MODINDICES(3.841);
+
+!*******!
+TITLE:
+    Example 5: Stability of alienation exercise -- Step 1
+DATA:
+    FILE IS Mplus_Two_Step_Exercise_data.txt;
+    TYPE IS COVA;
+    NOBS IS 932; 
+VARIABLE:
+    NAMES ARE anomia67 powles67 anomia71 powles71 educ sei;
+MODEL:
+    !specify factors
+    !ses as latent factor -> not recommended
+    SES BY educ sei;
+    !alienation in year 1967
+    !measurement equivalence with (a) specification
+    Alien67 BY anomia67 
+               powles67 (a);
+    !alienation in year 1971
+    Alien71 BY anomia71 
+               powles71 (a);
+
+    !implied here is that all factors covary
+    !just no structural paths yet (this is just a measurement model)
+
+    !error covariance between same items across time
+    anomia67 WITH anomia71;
+    powles67 WITH powles71;
+
+OUTPUT:
+    SAMPSTAT STANDARDIZED MODINDICES(3.841);
+
+!*******!
+TITLE:
+    Example 6: Stability of alienation exercise -- Step 2
+DATA:
+    FILE IS Mplus_Two_Step_Exercise_data.txt;
+    TYPE IS COVA;
+    NOBS IS 932; 
+VARIABLE:
+    NAMES ARE anomia67 powles67 anomia71 powles71 educ sei;
+MODEL:
+    !specify factors
+    !ses as latent factor -> not recommended
+    SES BY educ sei;
+    !alienation in year 1967
+    !measurement equivalence with (a) specification
+    Alien67 BY anomia67 
+               powles67 (a);
+    !alienation in year 1971
+    Alien71 BY anomia71 
+               powles71 (a);
+
+    !structural equation among factors
+    Alien67 ON SES;
+    Alien71 ON SES Alien67;
+    
+    !error covariance between same items across time
+    anomia67 WITH anomia71;
+    powles67 WITH powles71;
+
+!might add indirect effects for funsy
+!MODEL INDIRECT:
+    !Alien71 IND Alien67 SES;
+
+OUTPUT:
+    SAMPSTAT STANDARDIZED MODINDICES(3.841);

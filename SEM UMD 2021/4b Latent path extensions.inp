@@ -1,0 +1,83 @@
+!* SEM UMD Workshop 2021
+4b. Latent Variable Path Analysis Extensions
+6-Jan-2021
+Instructor: Dr. Gregory Hancock
+Notes: Linh Nguyen
+*! All models are aggregated for notekeeping, need to be separated to run
+
+TITLE: 
+    Example 1: Actor Partner Interdependence Model
+DATA: 
+    FILE IS APIM_data.csv;
+VARIABLE:
+    NAMES ARE mma41 mma42 mma43 mma44
+              mma51 mma52 mma53 mma54
+              dma41 dma42 dma43 dma44
+              dma51 dma52 dma53 dma54;
+MISSING IS ALL (-999);
+
+MODEL:
+    !specify latent factors
+    MOM4 BY mma41@1
+            mma42 (load1)
+            mma43 (load2)
+            mma44 (load3);
+    MOM5 BY mma51@1
+            mma52 (load1)
+            mma53 (load2)
+            mma54 (load3);
+    DAD4 BY dma41@1
+            dma42 (load1)
+            dma43 (load2)
+            dma44 (load3);
+    DAD5 BY dma51@1
+            dma52 (load1)
+            dma53 (load2)
+            dma54 (load3);
+
+    !structural paths
+    !label actor-partner effects
+    MOM5 ON MOM4 (a1)
+            DAD4 (p2);
+    DAD5 ON MOM4 (p1)
+            DAD4 (a2);
+
+    !factor covariance
+    MOM5 WITH DAD5;
+
+    !item error covariances
+    mma41 WITH mma51; mma42 WITH mma52;
+    mma43 WITH mma53; mma44 WITH mma54;
+    dma41 WIHT dma51; dma42 WITH dma52;
+    dma43 WITH dma53; dma44 WITH dma54;
+    mma41 WITH dma41; mma42 WITH dma42;
+    mma43 WITH dma43; mma44 WITH dma44;
+    mma51 WITH dma51l mma52 WITH dma52;
+    mma53 WITH dma53; mma54 WITH dma54;
+
+!explicitly test actor-partner effects
+CONSTRAINTS:
+    NEW(diffa1a2 diffp1p2 diffa1p2 diffa2p1);
+    diffa1a2 = a1 - a2;
+    diffp1p2 = p1 - p2;
+    diffa1p2 = a1 - p2;
+    diffa2p1 = a2 - p1;
+
+OUTPUT: 
+    SAMPSTAT STDYX;
+
+!*******!
+TITLE:
+    Example 2: Reliability Paradox Example
+DATA:
+    FILE IS paradox_data.txt;
+    TYPE IS COVA;
+    NOBS IS 84;
+VARIABLE:
+    NAMES ARE SUP1 EF1 BEH1 SUP2 EF2 BEH2;
+MODEL:
+    SUP2 ON SUP1;
+    EF2 ON EF1 SUP1;
+    BEH2 ON BEH1 EF1 EF2;
+OUTPUT:
+    SAMPSTAT STANDARDIZED;
