@@ -1,0 +1,174 @@
+!* SEM UMD Workshop 2021
+5a. Multigroup Analysis (Measured Variables)
+6-Jan-2021
+Instructor: Dr. Gregory Hancock
+Notes: Linh Nguyen
+*! All models are aggregated for notekeeping, need to be separated to run
+
+TITLE:
+    !step 1 is just 2 separate models for 2 groups
+    Example 1: Multigroup measured variables PA -- Step 2;
+DATA:
+    !load 2 separate data files with different names
+    FILE (girls) IS proficiencyraw-female.csv;
+    FILE (boys) IS proficiencyraw-male.csv;
+VARIABLE:
+    !same format in 2 data files
+    NAMES ARE goals1-goals6 rsc1-rsc5 hsc1-hsc5 
+            msc1-msc5 ssc1-ssc5 SATvoc SATcomp 
+            SATlang SATmath SATprob SATproc;
+    USEVARIABLES = goals2 rsc1 hsc1 msc1 ssc1 SATmath;
+
+MODEL:
+    !structural paths
+    goals2 ON rsc1 hsc1 msc1 ssc1;
+    satmath ON rsc1 msc1 ssc1 goals2;
+    
+    !error covariances
+    hsc1 WITH rsc1;
+    rsc1 WITH msc1;
+    rsc1 WITH ssc1;
+    msc1 WITH ssc1;
+
+    !fix certain error covariance = 0
+    hsc1 WITH msc1@0;
+    hsc1 WITH ssc1@0;
+
+OUTPUT:
+    !no standardized results
+    SAMPSTAT;
+
+
+!*******!
+TITLE:
+    Example 2: Multigroup measured variables PA -- Step 2 combined data;
+DATA:
+    !load 1 combined data file with grouping variable
+    FILE IS proficiencyraw-both.csv;
+VARIABLE:
+    NAMES ARE gender goalls1-goals6 rsc1-rsc5 hsc1-hsc5
+              msc1-msc5 ssc1-ssc5 SATvoc SATcomp
+              SATlang SATmath SATprob SATproc;
+    USEVARIABLES = gender goals2 rsc1 hsc1 msc1 ssc1 SATmath;
+    !grouping variable
+    GROUPING IS gender(1=female 2=male);
+
+!model is specified in the same way
+MODEL:
+    !structural paths
+    goals2 ON rsc1 hsc1 msc1 ssc1;
+    satmath ON rsc1 msc1 ssc1 goals2;
+    
+    !error covariances
+    hsc1 WITH rsc1;
+    rsc1 WITH msc1;
+    rsc1 WITH ssc1;
+    msc1 WITH ssc1;
+
+    !fix certain error covariance = 0
+    hsc1 WITH msc1@0;
+    hsc1 WITH ssc1@0;
+
+OUTPUT:
+    !no standardized results
+    SAMPSTAT;
+
+!*******!
+TITLE:
+    Example 3: Multigroup measured variables -- Step 3 constrain all;
+DATA:
+    FILE (girls) IS proficiencyraw-female.csv;
+    FILE (boys) IS proficiencyraw-male.csv;
+VARIABLE:
+    NAMES ARE goals1-goals6 rsc1-rsc5 hsc1-hsc5 
+              msc1-msc5 ssc1-ssc5 SATvoc SATcomp 
+              SATlang SATmath SATprob SATproc;
+    USEVARIABLES = goals2 rsc1 hsc1 msc1 ssc1 SATmath;
+
+MODEL:
+    !a b c d constrain similar paths to be equal across groups
+    goals2 ON rsc1 (a) 
+              hsc1 (b) 
+              msc1 (c)
+              ssc1 (d);
+    satmath ON rsc1 (e)
+               msc1 (f)
+               ssc1 (g)
+               goals2 (h);
+    
+    !error covariances
+    hsc1 WITH rsc1; rsc1 WITH msc1;
+    rsc1 WITH ssc1; msc1 WITH ssc1;
+    hsc1 WITH msc1@0; hsc1 WITH ssc1@0;
+
+OUTPUT:
+    !look at modification indices to see effects of relaxing each equality constraints
+    SAMPSTAT MODINDICES(3.841);
+
+!*******!
+TITLE:
+    Example 4: Multigroup measured variables -- Step 3 test difference;
+DATA:
+    FILE (girls) IS proficiencyraw-female.csv;
+    FILE (boys) IS proficiencyraw-male.csv;
+VARIABLE:
+    NAMES ARE goals1-goals6 rsc1-rsc5 hsc1-hsc5 
+              msc1-msc5 ssc1-ssc5 SATvoc SATcomp 
+              SATlang SATmath SATprob SATproc;
+    USEVARIABLES = goals2 rsc1 hsc1 msc1 ssc1 SATmath;
+
+MODEL:
+    goals2 ON rsc1 
+              hsc1 
+              msc1
+              ssc1;
+    satmath ON rsc1
+               msc1
+               ssc1
+               goals2;
+    hsc1 WITH rsc1; rsc1 WITH msc1;
+    rsc1 WITH ssc1; msc1 WITH ssc1;
+    hsc1 WITH msc1@0; hsc1 WITH ssc1@0;
+
+!label separate parameters for girls and boys
+MODEL girls:
+    goals2 ON rsc1 (a1) 
+              hsc1 (b1) 
+              msc1 (c1)
+              ssc1 (d1);
+    satmath ON rsc1 (e1)
+               msc1 (f1)
+               ssc1 (g1)
+               goals2 (h1);
+    hsc1 WITH rsc1; rsc1 WITH msc1;
+    rsc1 WITH ssc1; msc1 WITH ssc1;
+    hsc1 WITH msc1@0; hsc1 WITH ssc1@0;
+
+MODEL boys:
+    goals2 ON rsc1 (a2) 
+              hsc1 (b2) 
+              msc1 (c2)
+              ssc1 (d2);
+    satmath ON rsc1 (e2)
+               msc1 (f2)
+               ssc1 (g2)
+               goals2 (h2);
+    hsc1 WITH rsc1; rsc1 WITH msc1;
+    rsc1 WITH ssc1; msc1 WITH ssc1;
+    hsc1 WITH msc1@0; hsc1 WITH ssc1@0;
+
+!create difference parameters
+MODEL CONSTRAINT:
+    NEW(adiff bdiff cdiff ddiff ediff fdiff gdiff hdiff);
+
+    adiff = a1 - a2;
+    bdiff = b1 - b2;
+    cdiff = c1 - c2;
+    ddiff = d1 - d2;
+    ediff = e1 - e2;
+    fdiff = f1 - f2;
+    gdiff = g1 - g2;
+    hdiff = h1 - h2;
+
+OUTPUT:
+    SAMPSTAT;

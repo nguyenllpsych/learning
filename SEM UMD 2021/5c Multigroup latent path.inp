@@ -1,0 +1,103 @@
+!* SEM UMD Workshop 2021
+5c. Multigroup Analysis (Latent Path)
+6-Jan-2021
+Instructor: Dr. Gregory Hancock
+Notes: Linh Nguyen
+*! All models are aggregated for notekeeping, need to be separated to run
+
+TITLE:
+    Example 1: Multigroup LVPA -- Structural phase with constraints;
+DATA:
+    FILE (girls) IS proficiencyraw-female.csv;
+    FILE (boys) IS proficiencyraw-male.csv;
+VARIABLE:
+    NAMES ARE goals1-goals6 rsc1-rsc5 hsc1-hsc5 
+              msc1-msc5 ssc1-ssc5 SATvoc SATcomp 
+              SATlang SATmath SATprob SATproc;
+    USEVARIABLES = goals1-goals6 rsc1-rsc5 hsc1-hsc5 
+                   msc1-msc5 ssc1-ssc5 SATmath SATprob SATproc;
+ANALYSIS:
+    MODEL = NOMEANSTRUCTURE;
+    INFORMATION = EXPECTED;
+MODEL:
+    !specify latent factors for both groups
+    RSC BY rsc1-rsc5;
+    HSC BY hsc1-hsc5;
+    MSC BY msc1-msc5;
+    SSC BY ssc1-ssc5;
+    TGOAL BY goals1-goals6;
+    MATHPROF BY SATmath SATprob SATproc;
+
+    !pairwise item error covariance
+    rsc1-rsc5 PWITH hsc1-hsc5;
+    rsc1-rsc5 PWITH msc1-msc5;
+    rsc1-rsc5 PWITH ssc1-ssc5;
+    hsc1-hsc5 PWITH msc1-msc5;
+    hsc1-hsc5 PWITH ssc1-ssc5;
+    msc1-msc5 PWITH ssc1-ssc5;
+
+    !structural paths
+    TGOAL ON RSC HSC MSC SSC;
+    MATHPROF ON RSC MSC SSC TGOAL;
+
+    !constrain certain covariance (theory, not to demonstrate this method)
+    HSC WITH MSC@0;
+    HSC WITH SSC@0;
+
+!this relaxation came from the measurement phase--not shown
+MODEL girls:
+    SSC BY ssc3;
+
+OUTPUT:
+    sampstat modindices(3.841);
+
+!*******!
+TITLE:
+    Example 2: Multigroup LVPA -- Structural phase with relaxation;
+DATA:
+    FILE (girls) IS proficiencyraw-female.csv;
+    FILE (boys) IS proficiencyraw-male.csv;
+VARIABLE:
+    NAMES ARE goals1-goals6 rsc1-rsc5 hsc1-hsc5 
+              msc1-msc5 ssc1-ssc5 SATvoc SATcomp 
+              SATlang SATmath SATprob SATproc;
+    USEVARIABLES = goals1-goals6 rsc1-rsc5 hsc1-hsc5 
+                   msc1-msc5 ssc1-ssc5 SATmath SATprob SATproc;
+ANALYSIS:
+    MODEL = NOMEANSTRUCTURE;
+    INFORMATION = EXPECTED;
+MODEL:
+    !specify latent factors for both groups
+    RSC BY rsc1-rsc5;
+    HSC BY hsc1-hsc5;
+    MSC BY msc1-msc5;
+    SSC BY ssc1-ssc5;
+    TGOAL BY goals1-goals6;
+    MATHPROF BY SATmath SATprob SATproc;
+
+    !pairwise item error covariance
+    rsc1-rsc5 PWITH hsc1-hsc5;
+    rsc1-rsc5 PWITH msc1-msc5;
+    rsc1-rsc5 PWITH ssc1-ssc5;
+    hsc1-hsc5 PWITH msc1-msc5;
+    hsc1-hsc5 PWITH ssc1-ssc5;
+    msc1-msc5 PWITH ssc1-ssc5;
+
+    !structural paths
+    !alternatively, can label these to create difference scores
+    TGOAL ON RSC HSC MSC SSC;
+    MATHPROF ON RSC MSC SSC TGOAL;
+
+    !constrain certain covariance (theory, not to demonstrate this method)
+    HSC WITH MSC@0;
+    HSC WITH SSC@0;
+
+MODEL girls:
+    !create unique estimates for girls
+    TGOAL ON RSC HSC MSC SSC;
+    MATHPROF ON RSC MSC SSC TGOAL;
+    !this relaxation came from the measurement phase--not shown
+    SSC BY ssc3;
+
+OUTPUT:
+    sampstat modindices(3.841);

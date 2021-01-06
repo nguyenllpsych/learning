@@ -1,0 +1,96 @@
+!* SEM UMD Workshop 2021
+5b. Multigroup Analysis (CFA)
+6-Jan-2021
+Instructor: Dr. Gregory Hancock
+Notes: Linh Nguyen
+*! All models are aggregated for notekeeping, need to be separated to run
+
+TITLE:
+    Example 1: Multigroup CFA -- Step 2;
+ DATA:
+    FILE (girls) IS proficiencyraw-female.csv;
+    FILE (boys) IS proficiencyraw-male.csv;
+ VARIABLE:
+    NAMES ARE goals1-goals6 rsc1-rsc5 hsc1-hsc5
+              msc1-msc5 ssc1-ssc5 SATvoc SATcomp
+              SATlang SATmath SATprob SATproc;
+    USEVARIABLES = rsc1-rsc5 hsc1-hsc5 
+			 msc1-msc5 ssc1-ssc5;
+ ANALYSIS:
+    !only focus on covariance structure
+    MODEL = NOMEANSTRUCTURE;
+    !the expected information matrix is used 
+    !to calculate standard error of the parameter estimate
+    INFORMATION = EXPECTED;
+MODEL:
+    !specify latent factors
+    RSC BY rsc1-rsc5;
+    HSC BY hsc1-hsc5;
+    MSC BY msc1-msc5;
+    SSC BY ssc1-ssc5;
+
+    !pairwise item error covariance
+    rsc1-rsc5 PWITH hsc1-hsc5;
+    rsc1-rsc5 PWITH msc1-msc5;
+    rsc1-rsc5 PWITH ssc1-ssc5;
+    hsc1-hsc5 PWITH msc1-msc5;
+    hsc1-hsc5 PWITH ssc1-ssc5;
+    msc1-msc5 PWITH ssc1-ssc5;
+
+MODEL girls:
+    !allow loadings to be unique for girls
+    !except first items -> fixed loadings =1 for std. for both groups
+    !see if model is tenable for both groups simultaneously
+    RSC BY rsc2-rsc5;
+    HSC BY hsc2-hsc5;
+    MSC BY msc2-msc5;
+    SSC BY ssc2-ssc5;
+OUTPUT:
+    SAMPSTAT;
+
+!*******!
+TITLE:
+    Example 2: Multigroup CFA Exercise -- Step 3 constrained;
+DATA:
+    FILE (alpha) IS alphabetic.csv;
+    FILE (nonalpha) IS non-alphabetic.csv;
+VARIABLE:
+    NAMES ARE hand number word triangle matrix spatial;
+ANALYSIS:
+    MODEL = NOMEANSTRUCTURE;
+    INFORMATION = EXPECTED;
+MODEL:
+    !specify latent factors
+    !without specifying separate groups separately -> equality constraints
+    SEQ BY hand number word;
+    SIM BY triangle matrix spatial;
+
+OUTPUT: 
+    !judging from MI -> SIM BY spatial may need relaxing
+    SAMPSTAT MODINDICES(3.841);
+
+!*******!
+TITLE:
+    Example 3: Multigroup CFA Exercise -- Step 3 unconstrained;
+DATA:
+    FILE (alpha) IS alphabetic.csv;
+    FILE (nonalpha) IS non-alphabetic.csv;
+VARIABLE:
+    NAMES ARE hand number word triangle matrix spatial;
+ANALYSIS:
+    MODEL = NOMEANSTRUCTURE;
+    INFORMATION = EXPECTED;
+MODEL:
+    !specify latent factors
+    SEQ BY hand number word;
+    SIM BY triangle matrix spatial;
+
+MODEL nonalpha:
+    !relax equality constraint for 1 loading
+    !SIM BY spatial from MI of constrained model
+    !differential function of this item
+    SIM by spatial;
+
+OUTPUT: 
+    !fit much better after relaxing SIM by spatial
+    SAMPSTAT MODINDICES(3.841);
