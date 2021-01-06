@@ -24,7 +24,8 @@ MODEL:
     F1;
 
 OUTPUT:
-    !MODINDICES: display all modification indices
+    !MODINDICES: display all modification indices, including for direct effects of observed dependent variables regressed on covariates 
+    !min MI = 10 by default
     SAMPSTAT STDYX MODINDICES(ALL);
 
 !*******!
