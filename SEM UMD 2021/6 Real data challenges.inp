@@ -1,0 +1,113 @@
+!* SEM UMD Workshop 2021
+6. Real Data Challenges
+7-Jan-2021
+Instructor: Dr. Gregory Hancock
+Notes: Linh Nguyen
+*! All models are aggregated for notekeeping, need to be separated to run
+
+TITLE:
+    Example 1: Missingness example EAT 1
+DATA:
+    FILE IS EATdata.txt;
+VARIABLE:
+    NAMES ARE v1-v7 bmi;
+    USEVARIABLES v1-v7; 
+    
+    !missingness codes in data
+    !FIML will be invoked automatically by default
+    MISSING ALL (-999999);
+
+    !for blanks as missingness use:
+    !MISSINGARE ALL BLANK;
+
+    !auxiliary variables to be used as missing data correlates (m)
+    AUXILIARY (m) bmi;
+MODEL:
+    !specify factor 
+    driveft BY v1-v7;
+OUTPUT:
+    SAMPSTAT STDYX;
+
+!*******!
+TITLE: 
+    Example 2: Nonnormality with robust scaling method
+DATA:
+    FILE IS nonnormal_data.txt;
+VARIABLE:
+    NAMES ARE pap1-pap3 pav1-pav3
+              mav1-mav3 map1-map3;
+ANALYSIS:
+    !MLR = robust scaling adjustment for ML
+    !cannot accomodate missingness
+    !FIML assumes normality
+    ESTIMATOR IS MLR;
+
+MODEL:
+    pap BY pap1* pap2 pap3;
+    pav BY pav1* pav2 pav3;
+    mav BY mav1* mav2 mav3;
+    map BY map1* map2 map3;
+
+    !constrain factor variance instead of factor loadings
+    pap@1; pav@1; mav@1; map@1;
+
+OUTPUT:
+    SAMPSTAT STDYX;
+
+!*******!
+TITLE: 
+    Example 3: Categorical data;
+DATA:
+    FILE IS categorical_data.txt;
+VARIABLE:
+    NAMES ARE pap1-pap3 pav1-pav3
+              mav1-mav3 map1-map3;
+    !specify the categorical variables
+    CATEGORICAL ARE pap1-map3;
+ANALYSIS:
+    !WLSM = weighted least squares mean
+    !WLSMV = weighted least squares variance
+    !algorith will first compute polychoric correlation matrix 
+    !use as input for estimation
+    !cannot handle missingness -> pairwise deletion
+    ESTIMATOR IS WLSM;
+
+MODEL:
+    !specify latent factors
+    pap BY pap1-pap3*;
+    pav BY pav1-pav3*;
+    mav BY mav1-mav3*;
+    map BY map1-map3*;
+
+    !std. variance of factor = 1
+    pap@1; pav@1; mav@1; map@1;
+
+OUTPUT:
+    SAMPSTAT STDYX;
+
+!*******!
+TITLE: 
+    Example 4: Complex data structure;
+DATA:
+    FILE IS accidents.csv;
+VARIABLE:
+    NAMES ARE school region alcohol marij violate accident rawwt;
+    
+    !specify weight - inversely proportional to overall sampling probabilities
+    WEIGHT IS rawwt; 
+
+    !strata, clusters
+    STRAT IS region; 
+    CLUSTER IS school;
+
+ANALYSIS:
+    !specify complex structure
+    TYPE IS COMPLEX;
+
+MODEL:
+    !measure path analysis
+    violate ON alcohol marij;
+    accident ON alcohol marij violate;
+
+OUTPUT:
+    SAMPSTAT STDYX;
