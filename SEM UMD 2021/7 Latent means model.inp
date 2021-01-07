@@ -1,0 +1,98 @@
+!* SEM UMD Workshop 2021
+7. Latent Means Models
+7-Jan-2021
+Instructor: Dr. Gregory Hancock
+Notes: Linh Nguyen
+*! All models are aggregated for notekeeping, need to be separated to run
+
+TITLE:
+    Example 1: Group code analysis
+DATA:
+    FILE IS mimicdata.txt;
+    !covariance matrix
+    TYPE IS COVA;
+    NOBS IS 2000;
+VARIABLE:
+    NAMES ARE satmath satprob satproc dummy;
+
+MODEL:
+    !specify latent factor
+    !fix loading of satprob, not sat math
+    mathprof BY satmath* satprob@1 satproc;
+    
+    !structural path for grouping variable
+    mathprof ON dummy;
+
+OUTPUT:
+    SAMPSTAT STANDARDIZED;
+
+!*******!
+TITLE:
+    Example 2: Structured means - measured variable
+DATA:
+    FILE IS simple_data.csv;
+VARIABLE:
+    NAMES ARE tgoal satmath;
+MODEL:
+    satmath ON tgoal;
+    
+    !these two lines are default
+    tgoal; satmath; 
+
+    !squared brackets indicate means
+    [tgoal]; [satmath];
+
+OUTPUT:
+    SAMPSTAT STANDARDIZED;
+
+!*******!
+TITLE:
+    Example 3: Structured means - latent variable
+DATA:
+    !separate datafiles 
+    FILE (girls) IS means_data_girls.txt;
+    FILE (boys) IS means_data_boys.txt;
+
+VARIABLE:
+    NAMES ARE satvoc satcomp satlang;
+
+MODEL:
+    !specify latent factor fix factor loading for satlang
+    rprof BY satvoc* satcomp* satlang@1;
+
+!anything not specified per group has equality constraints
+MODEL girls:
+    !factor mean for girls = 0 -> reference
+    [rprof@0];
+
+MODEL boys:
+    !estimate the mean for boys
+    [rprof]; 
+
+OUTPUT:
+    SAMPSTAT MODINDICES(3.841);
+
+!*******!
+TITLE:
+    Example 4: Latent means exercise English learner
+DATA:
+    FILE (chinese) IS ENGLISHchineseread.txt;
+    FILE (korean) IS ENGLISHkoreanread.txt;
+
+VARIABLE: 
+    NAMES ARE read1 read2 read3;
+
+MODEL:
+    !specify latent factors for both groups
+    read BY read1 read2 read3;
+
+MODEL chinese:
+    !chinese is reference group
+    [read@0];
+
+MODEL korean:
+    !estimate mean for korean group
+    [read];
+
+OUTPUT:
+    SAMPSTAT MODINDICES(3.841)
