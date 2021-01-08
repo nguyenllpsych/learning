@@ -1,0 +1,221 @@
+!* SEM UMD Workshop 2021
+9. Latent growth model
+8-Jan-2021
+Instructor: Dr. Gregory Hancock
+Notes: Linh Nguyen
+*! All models are aggregated for notekeeping, need to be separated to run
+
+TITLE: 
+    Example 1: Latent growth mathsc
+DATA:
+    FILE IS growth1_data.txt;
+    !covariance matrix (with means)
+    TYPE IS MEANS COVA;
+    NOBS IS 1000;
+VARIABLE:
+    NAMES ARE mathsc9-mathsc12;
+
+MODEL:
+    !latent intercept factor with fixed loadings = 1
+    interc BY mathsc9-mathsc12@1;
+    !latent slope factor with fixed loadings = 0 1 2 3
+    slope BY mathsc9@0 mathsc10@1 mathsc11@2 mathsc12@3;
+
+    !latent mean for intercept and slope
+    !fix item means = 0 (already loaded onto latent intercept)
+    [interc-slope]; [mathsc9-mathsc12@0];
+
+OUTPUT:
+    SAMPSTAT;
+
+!*******!
+TITLE:
+    Example 2: Latent growth mathsc mplus-specific syntax
+DATA:
+    FILE IS growth1_data.txt;
+    TYPE IS MEANS COVA;
+    NOBS IS 1000;
+VARIABLE:
+    NAMES ARE mathsc9-mathsc12;
+
+MODEL:
+    !intercept and slope, fixing slope specifically
+    i s | mathsc9@0 mathsc10@1 mathsc11@2 mathsc12@3;
+
+OUTPUT: 
+    SAMPSTAT;
+
+!*******!
+TITLE:
+    Example 3: Latent growth english learning
+DATA:
+    FILE IS growth2_data.txt;
+    TYPE IS MEANS COVA;
+    NOBS IS 324;
+VARIABLE:
+    NAMES ARE read1-read3;
+MODEL:
+    !latent final score factor with fixed loadings = 1
+    final BY read1-read3@1;
+    !latent slope factor with final score as reference
+    slope BY read1@-2 read2@-1 read3@0;
+    
+    !latent means for intercept and slope
+    !fix item means = 0
+    [final-slope]; [read1-read3@0];
+
+    !to force homoscedasticity -> constrain error variance
+    !read1 (a);
+    !read2 (a);
+    !read3 (a);
+
+OUTPUT:
+    SAMPSTAT STDYX;
+
+!*******!
+TITLE: 
+    Example 4: Time-invariant predictor of change
+DATA:
+    FILE IS growth_predictor_data.txt;
+    TYPE IS COVA;
+    NOBS IS 1000;
+VARIABLE:
+    NAMES ARE mathsc9-mathsc12 momed;
+MODEL:
+    !latent intercept and slope
+    interc BY mathsc9-mathsc12@1;
+    slope BY mathsc9@0 mathsc10@1 mathsc11@2 mathsc12@3;
+    
+    !predictor of intercept and slope
+    interc ON momed;
+    slope ON momed;
+
+    !covariance between intercept and slope (default)
+    interc WITH slope;
+OUTPUT:
+    SAMPSTAT;
+
+!******!
+TITLE:
+    Example 5: Time-invariance predictor of change exercise
+DATA:
+    FILE IS growth_predictor_exercise_data.txt;
+    TYPE IS COVA;
+    NOBS IS 324;
+VARIABLE:
+    NAMES ARE total1-total3 gender;
+
+MODEL:
+    final BY total1-total3@1;
+    slope BY total1@-2 total2@-1 total3@0;
+
+    final ON gender;
+    slope ON gender;
+    
+    !don't have means
+    !fix error variances
+    total1-total3 (a);
+OUTPUT:
+    SAMPSTAT;
+
+!*******!
+TITLE:
+    Example 6: Time-variant predictor of change
+DATA:
+    FILE IS growth_tdc_data.txt;
+    TYPE IS MEANS COVA;
+    NOBS IS 324;
+VARIABLE:
+    NAMES ARE read1-read3 write1-write3;
+MODEL:
+    !latent intercept and slopes, usual constrains
+    interc BY write1-write3@1;
+    slope BY write1@0 write2@1 write3@2;
+
+    !structural paths between measured DVs and predictors
+    write1 ON read1; write2 ON read2; write3 ON read3; 
+    
+    !means for latent intercept and slopes
+    [interc-slope]; 
+    
+    !means for variant predictors
+    [read1-read3];
+
+    !fix DV means at 0
+    [write1-write3@0];
+
+OUTPUT:
+    SAMPSTAT;
+
+!******!
+TITLE: 
+    Example 7: Second-order or curve of factor models
+DATA:
+    FILE IS second_order_data.txt;
+
+VARIABLE:
+    NAMES ARE read1-read3 list1-list3
+              speak1-speak3 write1-write3;
+MODEL:
+    !specify factors at each time point with same loadings
+    english1 BY read1 list1 (a)
+                      speak1 (b)
+                      write1 (c);
+    english2 BY read2 list2 (a)
+                      speak2 (b)
+                      write2 (c);
+    english3 BY read3 list3 (a)
+                      speak3 (b)
+                      write3 (c);
+    
+    !second-order factor for intercept and slope
+    interc BY english1-english3@1;
+    slope BY english1@0 english2@1 english3@2;
+    interc WITH slope;
+
+    !latent means estimated, item means fixed 0 or equal
+    [interc-slope]; [read1-read3@0];
+    [list1-list3] (d); [speak1-speak3] (e); [write1-write3] (f);
+    
+    !item error covariances
+    read1 WITH read2; read1 WITH read3; read2 WITH read3;
+    list1 WITH list2; list1 WITH list3; list2 WITH list3;
+    speak1 WITH speak2; speak1 WITH speak3; speak2 WITH speak3;
+    write1 WITH write2; write1 WITH write3; write2 WITH write3;
+
+OUTPUT:
+    SAMPSTAT;
+
+!*******!
+TITLE:
+    Example 8: Growth mixture model (did not cover in-depth)
+DATA: 
+    FILE IS mixture_data.txt;
+VARIABLE: 
+    NAMES ARE TALC1YR1 TALC1YR2 TALC1YR3
+              PROB5 TAGE1 TGENDER1;
+    MISSING = ALL (-99);
+    USEVARIABLES TALC1YR1 TALC1YR2 TALC1YR3;
+    CLASSES = C(2);
+ANALYSIS: 
+!  ESTIMATOR=MLR;
+    TYPE = MIXTURE;
+    STARTS = 500 100;
+!  MITERATION = 5000;
+MODEL:
+    %OVERALL%
+    INTERC BY TALC1YR1-TALC1YR3@1;
+    SLOPE BY TALC1YR1@0 TALC1YR2@1 TALC1YR3@2;
+    [TALC1YR1-TALC1YR3@0];
+    TALC1YR1-TALC1YR3;
+    INTERC; SLOPE;
+    INTERC WITH SLOPE;
+    
+    !first class
+    %C#1%
+    [INTERC]; [SLOPE];   
+    !second class
+    %C#2%
+    [INTERC]; [SLOPE];   
+
+OUTPUT: TECH1 TECH11 TECH14;
