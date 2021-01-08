@@ -1,0 +1,145 @@
+!* SEM UMD Workshop 2021
+8. Interaction and Nonlinear Relationship
+8-Jan-2021
+Instructor: Dr. Gregory Hancock
+Notes: Linh Nguyen
+*! All models are aggregated for notekeeping, need to be separated to run
+
+TITLE: 
+    Example 1: Interaction unconstrained product-indicator
+DATA:
+    FILE IS interact1.txt;
+VARIABLE:
+    !already preprocessed (centered + product)
+    NAMES ARE ach1c ach2c ach3c com1c com2c com3c 
+              sup1c sup2c sup3c 
+              !product variables
+              cs1c cs2c cs3c;
+ANALYSIS:
+    !robust rescaling correction
+    ESTIMATOR IS MLR;
+
+MODEL:
+    !specify latent factors
+    commit BY com1c-com3c;
+    support BY sup1c-sup3c;
+    achieve BY ach1c-ach3c;
+
+    !specify latent product factor
+    comsup BY cs1c-cs3c;
+    
+    !item error covariance between indicator and product
+    com1c sup1c WITH cs1c;
+    com2c sup2c WITH cs2c;
+    com3c sup3c WITH cs3c;
+
+    !structural path
+    achieve ON commit support comsup;
+
+OUTPUT:
+    SAMPSTAT STDYX;
+
+!*******!
+TITLE:
+    Example 2: Latent moderated structural equations
+DATA:
+    FILE IS interact1.txt;
+VARIABLE:
+    !uses centered variables here but no need
+    NAMES ARE ach1c ach2c ach3c com1c com2c com3c
+              sup1c sup2c sup3c cs1c cs2c cs3c;
+    USEVARIABLES = ach1c ach2c ach3c com1c com2c com3c
+                   sup1c sup2c sup3c;
+ANALYSIS:
+    !robust rescaling
+    ESTIMATOR IS MLR;
+  
+    !commands to invoke LMS
+    ALGORITHM = integration;
+    TYPE= random;
+
+MODEL:
+    !specify latent factors
+    commit BY com1c-com3c;
+    support BY sup1c-sup3c;
+    achieve BY ach1c-ach3c;
+
+    !specify moderation/interaction effects
+    comsup | commit XWITH support;
+
+    !structural paths
+    achieve ON commit support comsup;
+
+OUTPUT:
+    SAMPSTAT;
+
+!*******!
+TITLE:
+    Example 3: Motivation exercise product-indicator
+DATA:
+    FILE IS motivation.txt;
+VARIABLE:
+    !already preprocessed (centered and products)
+    NAMES ARE motive1c motive2c expect1c expect2c 
+              value1c value2c expval1c expval2c;
+
+ANALYSIS:
+    ESTIMATOR IS MLR;
+
+MODEL:
+    !latent factors
+    expect BY expect1c expect2c; !iv
+    value BY value1c value2c;    !moderator
+    motive BY motive1c motive2c; !dv
+
+    !latent product factor
+    expval BY expval1c expval2c;
+
+    !item error covariance btw indicator and product
+    expect1c value1c WITH expval1c;
+    expect2c value2c WITH expval2c;
+
+    !structural path
+    motive ON expect value expval;
+
+OUTPUT:
+    SAMPSTAT STDYX;
+
+!*******!
+TITLE:
+    Example 4: Motivation exercise LMS
+DATA:
+    FILE IS motivation.txt;
+VARIABLE:
+    NAMES ARE motive1c motive2c expect1c expect2c 
+              value1c value2c expval1c expval2c;
+    !not using product terms
+    USEVARIABLES = motive1c motive2c expect1c expect2c 
+                   value1c value2c;
+ANALYSIS:
+    ESTIMATOR IS MLR;
+    !needed for LMS
+    ALGORITHM = integration;
+    TYPE = random;
+
+MODEL:
+    !specify latent factors, fix variance = 1
+    expect BY expect1c-expect2c*;
+    value BY value1c-value2c*;
+    expect@1; value@1;
+    motive BY motive1c-motive2c;
+
+    !specify moderation/interaction effect
+    expval | expect XWITH value;
+
+    !structural paths
+    motive ON expect value expval;
+
+OUTPUT:
+    SAMPSTAT;
+
+
+
+
+
+  
