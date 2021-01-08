@@ -1,0 +1,77 @@
+!* SEM UMD Workshop 2021
+10. Power analysis
+8-Jan-2021
+Instructor: Dr. Gregory Hancock
+Notes: Linh Nguyen
+*! All models are aggregated for notekeeping, need to be separated to run
+
+TITLE:
+    Example 1: Monte carlo power analysis
+MONTECARLO: 
+    NAMES ARE v1-v8; 
+    !this number is from different manual iterations 
+    !until we're happy with %Sig coeff for focal parameters
+    NOBSERVATIONS = 303;
+    !number of samples
+    NREPS = 10000; 
+    !seed for reproducibility
+    SEED = 53487;
+
+!theoretical population
+MODEL POPULATION:
+    !peripheral parameters
+    f1 BY v1*.5; f1 BY v2*-.7; f1 BY v3*.6;
+    f2 BY v4*.8; f2 BY v5*.9; f2 BY v6*-.6;
+    f3 BY v7@.938; f3 BY v8*.964;
+    v1*.75; v2*.51; v3*.64; v4*.36;
+    v5*.19; v6*.64; v7*.12; v8*.07;
+    f1@1; f2@1; f3*.77;
+    !focal parameters
+    f3 ON f1*.20;
+    f3 ON f2*.50;
+    f1 WITH f2*-.30;
+
+!here is the same as population
+!but can be adjusted with different peripheral parameters
+!for sensitivity analysis
+MODEL:
+    !peripheral parameters
+    f1 BY v1*.5; f1 BY v2*-.7; f1 BY v3*.6;
+    f2 BY v4*.8; f2 BY v5*.9; f2 BY v6*-.6;
+    f3 BY v7@.938; f3 BY v8*.964;
+    v1*.75; v2*.51; v3*.64; v4*.36;
+    v5*.19; v6*.64; v7*.12; v8*.07;
+    f1@1; f2@1; f3*.77;
+    !focal parameters
+    f3 ON f1*.20;
+    f3 ON f2*.50;
+    f1 WITH f2*-.30;
+
+!*******!
+TITLE:
+    Example 2: Monte carlo power analysis LGM
+MONTECARLO: 
+    NAMES ARE V1-V4; 
+    NOBSERVATIONS = 175;
+    NREPS = 10000; SEED = 53487;
+    SAVE = MCoutput.txt; 
+
+! @ = model specification
+! * = parameter values
+MODEL POPULATION:
+    INTERC BY V1-V4@1;
+    SLOPE BY V1@0 V2@1 V3@2 V4@3;
+    V1-V4*.25;
+    INTERC*1; SLOPE*.04;
+    [INTERC*5]; [SLOPE*.5];
+    INTERC WITH SLOPE *-.1;
+    [V1-V4@0];
+
+MODEL:
+    INTERC BY V1-V4@1;
+    SLOPE BY V1@0 V2@1 V3@2 V4@3;
+    V1-V4*.25;
+    INTERC*1; SLOPE*.04;
+    [INTERC*5]; [SLOPE*.5];
+    INTERC WITH SLOPE *-.1;
+    [V1-V4@0];
