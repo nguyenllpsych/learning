@@ -96,3 +96,137 @@ MODEL korean:
 
 OUTPUT:
     SAMPSTAT MODINDICES(3.841)
+
+!*******!
+TITLE:  
+    Example 5: Repeated measure latent means
+DATA:
+    FILE IS repeated_means.txt;
+    TYPE IS MEANS STD CORR;
+    NOBS IS 84;
+
+VARIABLE:
+    NAMES ARE v1-v6;
+
+MODEL:
+    !equality constrain for loadings
+    socsupp1 BY v1
+                v2 (a)
+                v3 (b);
+    socsupp2 BY v4
+                v5 (a)
+                v6 (b);
+    
+    !pairwise error covariance for items
+    v1-v3 PWITH v4-v6;
+
+    !equality constrain for item means
+    [v1] (c); [v4] (c);
+    [v2] (d); [v5] (d);
+    [v3] (e); [v6] (e); 
+
+    !fix latent mean T1 = 0 -> reference group
+    [socsupp1@0];
+
+    !estimate latent mean T2 freely
+    [socsupp2];
+
+OUTPUT:
+    SAMPSTAT MODINDICES (3.841);
+
+!*******!
+TITLE:
+    Example 6: Repeated measure English learning
+DATA:
+    FILE IS ENGLISHchinese2.txt;
+
+VARIABLE:
+    NAMES ARE read1 read3 list1 list3
+              speak1 speak3 write1 write3;
+    USEVARIABLES = read1 read3 speak1 speak3 write1 write3;
+
+MODEL:
+    !equality constraints for factor loadings
+    lang1 BY read1 
+             list1 (a)
+             speak1 (b)
+             write1 (c);
+    lang2 BY read2 
+             list2 (a)
+             speak2 (b)
+             write2 (c);
+
+    !pairwise error covariances for items between time points
+    read1 WITH read2;
+    list1 WITH list2;
+    speak1 WITH speak2;
+    write1 WITH write2;
+
+    !equality constrain for item means
+    [read1] (d); [read2] (d);
+    [list1] (e); [list2] (e);
+    [speak1] (f); [speak2] (f);
+    [write1] (g); [write2] (g);
+
+    !fix latent mean T1 = 0 -> reference group
+    [lang1@0];
+
+    !estimate latent mean T2 freely
+    [lang2];
+
+OUTPUT:
+    SAMPSTAT MODINDICES(3.841);
+
+!*******!
+TITLE:
+    Example 7: More than two time points
+
+DATA:
+    FILE IS latent_means2_data.txt;
+VARIABLE:
+    NAMES ARE read1-read3 list1-list3
+              speak1-speak3 write1-write3;
+MODEL:
+    !equality constraints for factor loadings
+    ENGLISH1 BY read1 
+                list1 (a)
+                speak1 (b)
+                write1 (c);
+    ENGLISH2 BY read2 
+                list2 (a)
+                speak2 (b)
+                write2 (c);
+    ENGLISH3 BY read3 
+                list3 (a)
+                speak3 (b)
+                write3 (c);
+
+    !item error covariances between time points
+    read1 WITH read2-read3; 
+    read2 WITH read3;
+    list1 WITH list2-list3; 
+    list2 WITH list3;
+    speak1 WITH speak2-speak3; 
+    speak2 WITH speak3; 
+    write1 WITH write2-write3; 
+    write2 WITH write3; 
+
+    !equality constraints for item means 
+    [read1-read3] (d);
+    [list1-list3] (e); 
+    [speak1-speak3] (f); 
+    [write1-write3] (g);
+
+    !latent mean T1 = 0, freely estimate T2, T3
+    [ENGLISH1@0];
+    [ENGLISH2] (eng2);
+    [ENGLISH3] (eng3);
+
+!create a new variable = difference between T2 and T3
+!difference between T1 and T2 already tested because T1 = 0
+MODEL CONSTRAINT:
+  NEW(engdiff);
+  engdiff = eng2 - eng3;
+
+OUTPUT:
+    SAMPSTAT MODINDICES(3.841);
