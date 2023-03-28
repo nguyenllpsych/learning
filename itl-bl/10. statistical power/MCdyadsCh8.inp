@@ -1,0 +1,69 @@
+TITLE: Monte Carlo power simulation for Ch. 8 dyads example;
+MONTECARLO:	
+     NAMES ARE time7c freldis mreldis fwrkstrscw 
+     mwrkstrscw mwrkstrscb fwrkstrscb;
+     NOBSERVATIONS = 2100;
+	 NCSIZES = 1;
+	 CSIZES = 100 (21);
+	 SEED = 5859;
+	 NREPS = 1000;
+	 WITHIN = time7c fwrkstrscw mwrkstrscw;
+	 BETWEEN = mwrkstrscb fwrkstrscb;
+ANALYSIS:  
+     TYPE = twolevel random;
+     PROCESSORS = 4;
+     MODEL POPULATION:
+     %WITHIN%
+     slopef | freldis ON fwrkstrscw;
+     slopem | mreldis ON mwrkstrscw;
+     freldis ON time7c*-0.025;
+     mreldis ON time7c*0.012;
+     freldis WITH mreldis*0.064;
+     freldis*0.997; mreldis*0.761;
+     [fwrkstrscw*0 mwrkstrscw*0 time7c*-0.071];
+     fwrkstrscw*1.007 mwrkstrscw*1.015 time7c*749;
+     %BETWEEN%
+     freldis ON fwrkstrscb*0.621;
+     mreldis ON mwrkstrscb*-0.143;
+     freldis WITH mreldis*0.257;
+     freldis WITH slopef*0.058;
+     freldis WITH slopem*-0.003;
+     mreldis WITH slopef*0.001;
+     mreldis WITH slopem*0.031;
+     slopef WITH slopem*0.011;
+     [ freldis*4.648 ];
+     [ mreldis*5.086 ];
+     [ slopef*0.160 ];
+     [ slopem*0.109 ];
+     freldis*0.921;
+     mreldis*1.031;
+     slopef*0.016;
+     slopem*0.028;
+     [fwrkstrscb*-0.022 mwrkstrscb*0.022];
+     fwrkstrscb*0.047 mwrkstrscb*0.051;
+MODEL:		
+     %WITHIN%
+     slopef | freldis ON fwrkstrscw;
+     slopem | mreldis ON mwrkstrscw;
+     freldis ON time7c*-0.025;
+     mreldis ON time7c*0.012;
+     freldis WITH mreldis*0.064;
+     freldis*0.997; mreldis*0.761;
+     %BETWEEN%
+     freldis ON fwrkstrscb*0.621;
+     mreldis ON mwrkstrscb*-0.143;
+     freldis WITH mreldis*0.257;
+     freldis WITH slopef*0.058;
+     freldis WITH slopem*-0.003;
+     mreldis WITH slopef*0.001;
+     mreldis WITH slopem*0.031;
+     slopef WITH slopem*0.011;
+     [ freldis*4.648 ];
+     [ mreldis*5.086 ];
+     [ slopef*0.160 ];
+     [ slopem*0.109 ];
+     freldis*0.921;
+     mreldis*1.031;
+     slopef*0.016;
+     slopem*0.028;
+OUTPUT:

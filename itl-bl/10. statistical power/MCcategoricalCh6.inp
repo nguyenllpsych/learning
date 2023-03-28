@@ -1,0 +1,39 @@
+TITLE: Monte Carlo power simulation for Ch. 6 categorical example;
+MONTECARLO:	
+     NAMES ARE pconf amangcw amangcb lpconfc time7c;
+     NOBSERVATIONS = 6100;
+	 NCSIZES = 1;
+	 CSIZES = 61 (100);
+	 SEED = 5859;
+	 NREPS = 100;
+	 WITHIN = time7c amangcw lpconfc;
+	 BETWEEN = amangcb;
+     GENERATE = pconf (1);
+     CATEGORICAL = pconf;
+ANALYSIS:  
+     TYPE = twolevel random;
+     ALGORITHM = integration;
+     PROCESSORS = 4;
+     MODEL POPULATION:
+     %WITHIN%
+     pconf ON amangcw*0.208;
+     pconf ON lpconfc*0.314;
+     pconf ON time7c*-0.168;
+     [amangcw*0 lpconfc*0 time7c*1.321];
+     amangcw*0.997 lpconfc*0.132 time7c*1.321;
+     %BETWEEN%
+     pconf ON amangcb*-0.184;
+     [pconf$1*1.865];
+     pconf*0.213;
+     [amangcb*0];
+     amangcb*0.244;
+MODEL:
+     %WITHIN%
+     pconf ON amangcw*0.208;
+     pconf ON lpconfc*0.314;
+     pconf ON time7c*-0.168;
+     %BETWEEN%
+     pconf ON amangcb*-0.184;
+     [pconf$1*1.865];
+     pconf*0.213;
+OUTPUT:

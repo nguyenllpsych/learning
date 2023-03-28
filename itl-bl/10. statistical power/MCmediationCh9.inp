@@ -1,0 +1,48 @@
+TITLE: Monte Carlo power simulation for Ch. 9 mediation example;
+MONTECARLO:
+names are timec x m y;
+nobservations = 2100;
+ncsizes = 1;
+csizes = 100 (21);
+seed = 5859;
+nreps = 500;
+within = x m y timec;
+ANALYSIS: TYPE = TWOLEVEL RANDOM;
+MODEL POPULATION:
+%WITHIN%
+[timec*0 x*0 m*0 y *0];
+timec*36.7 x*1.0 m*1.29 y *0.99;
+cp | y ON x;
+a | m ON x;
+b | y ON m;
+y on timec*0; m on timec*0;
+y *.855; m*1.86;
+%BETWEEN%
+cp WITH a*.008 b*.018;
+[a*.189] (ma); a*.067 (vara);
+[b*.149] (mb); b*.046 (varb);
+[cp*.106] (mcp); cp*.009;
+a WITH b*.031 (covab);
+MODEL:
+%WITHIN%
+[timec*0 x*0 m*0 y *0];
+timec*36.7 x*1.0 m*1.29 y *0.99;
+cp | y ON x;
+a | m ON x;
+b | y ON m;
+y on timec*0; m on timec*0;
+y *.855; m*1.86;
+%BETWEEN%
+cp WITH a*.008 b*.018;
+[a*.189] (ma); a*.067 (vara);
+[b*.149] (mb); b*.046 (varb);
+[cp*.106] (mcp); cp*.009;
+a WITH b*.031 (covab);
+MODEL CONSTRAINT:
+NEW CORAB*.531 MED*.056 VMED*.00892
+TE*.162 PME*.347;
+CORAB=covab/sqrt(vara*varb);
+MED=ma*mb+covab;
+VMED=(mb^2)*vara+(ma^2)*varb+vara*varb+2*ma*mb*covab+covab^2;
+TE=ma*mb+covab+mcp;
+PME=(ma*mb+covab)/(ma*mb+covab+mcp);
