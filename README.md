@@ -22,17 +22,17 @@ Instructor: Harshit Tyagi
 
 Course: Data Engineering Foundations - LinkedIn Learning
 
-Released: February 2, 2021
+Released: February 2, 2021;
 Taken: March, 2023
 
 Website: https://linkedin.com/learning/data-engineering-foundations
 
-###. 4. itl-bl
+### 4. itl-bl
 Authors: Niall Bolger and Jean-Philippe Laurenceau
 
 Book: Intensive Longitudinal Methods: An Introduction to Diary and Experience Sampling Research
 
-Published: 2013
+Published: 2013;
 Read: 2023
 
 Website: http://intensivelongitudinal.com
